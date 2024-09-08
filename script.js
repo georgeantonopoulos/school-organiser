@@ -1,3 +1,6 @@
+import { database } from './firebase-config.js';
+import { ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-database.js";
+
 const AUTHORIZED_EMAIL = 'elpielpi@gmail.com';
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 let currentDay = new Date().getDay() - 1;
@@ -9,13 +12,16 @@ let items = {
 };
 
 function authenticate() {
+    console.log("Authenticate function called");
     const email = document.getElementById('email').value;
+    console.log("Entered email:", email);
     if (email === AUTHORIZED_EMAIL) {
-        localStorage.setItem('authorizedEmail', email);
+        console.log("Email authorized");
         document.getElementById('auth').style.display = 'none';
         document.getElementById('planner').style.display = 'block';
         initializePlanner();
     } else {
+        console.log("Unauthorized email");
         alert('Unauthorized email. Please try again.');
     }
 }
@@ -30,8 +36,6 @@ function initializePlanner() {
         daysContainer.appendChild(dayElement);
     });
     loadItems();
-    renderItems();
-    enableDragAndDrop();
 }
 
 function setActiveDay(index) {
@@ -46,10 +50,10 @@ function addItem(child) {
     const input = document.querySelector(`#${child} input[type="text"]`);
     const item = input.value.trim();
     if (item) {
-        if (!items[child][DAYS[currentDay]]) {
-            items[child][DAYS[currentDay]] = [];
+        if (!items[child].items) {
+            items[child].items = [];
         }
-        items[child][DAYS[currentDay]].push({ text: item, selected: false });
+        items[child].items.push({ name: item, checked: false });
         input.value = '';
         saveItems();
         renderItems();
@@ -57,13 +61,13 @@ function addItem(child) {
 }
 
 function toggleItem(child, index) {
-    items[child][DAYS[currentDay]][index].selected = !items[child][DAYS[currentDay]][index].selected;
+    items[child].items[index].checked = !items[child].items[index].checked;
     saveItems();
     renderItems();
 }
 
 function removeItem(child, index) {
-    items[child][DAYS[currentDay]].splice(index, 1);
+    items[child].items.splice(index, 1);
     saveItems();
     renderItems();
 }
@@ -72,16 +76,16 @@ function renderItems() {
     ['christopher', 'maya'].forEach(child => {
         const container = document.querySelector(`#${child} .items`);
         container.innerHTML = '';
-        const dayItems = items[child][DAYS[currentDay]] || [];
-        dayItems.forEach((item, index) => {
+        const childItems = items[child].items || [];
+        childItems.forEach((item, index) => {
             const itemElement = document.createElement('div');
-            itemElement.className = `item ${item.selected ? 'selected' : ''}`;
+            itemElement.className = `item ${item.checked ? 'selected' : ''}`;
             itemElement.draggable = true;
             itemElement.setAttribute('data-index', index);
             itemElement.setAttribute('data-child', child);
             itemElement.innerHTML = `
-                <input type="checkbox" ${item.selected ? 'checked' : ''} onchange="toggleItem('${child}', ${index})">
-                <span>${item.text}</span>
+                <input type="checkbox" ${item.checked ? 'checked' : ''} onchange="toggleItem('${child}', ${index})">
+                <span>${item.name}</span>
                 <button onclick="removeItem('${child}', ${index})">Remove</button>
             `;
             container.appendChild(itemElement);
@@ -118,9 +122,9 @@ function drop(e) {
         const targetChild = targetElement.getAttribute('data-child');
         
         if (draggedChild === targetChild && draggedIndex !== targetIndex) {
-            const dayItems = items[draggedChild][DAYS[currentDay]];
-            const [removed] = dayItems.splice(draggedIndex, 1);
-            dayItems.splice(targetIndex, 0, removed);
+            const childItems = items[draggedChild].items;
+            const [removed] = childItems.splice(draggedIndex, 1);
+            childItems.splice(targetIndex, 0, removed);
             saveItems();
             renderItems();
         }
@@ -128,22 +132,57 @@ function drop(e) {
 }
 
 function saveItems() {
-    localStorage.setItem('schoolItems', JSON.stringify(items));
+    firebase.database().ref('items').set(items)
+        .then(() => {
+            console.log("Data saved successfully.");
+        })
+        .catch((error) => {
+            console.error("Error saving data: ", error);
+        });
 }
 
 function loadItems() {
-    const savedItems = localStorage.getItem('schoolItems');
-    if (savedItems) {
-        items = JSON.parse(savedItems);
-    }
+    firebase.database().ref('items').on('value', (snapshot) => {
+        if (snapshot.exists()) {
+            items = snapshot.val();
+            renderItems();
+            enableDragAndDrop();
+        } else {
+            console.log("No data available");
+        }
+    }, (error) => {
+        console.error("Error loading data: ", error);
+    });
 }
 
-// Initialize the planner when the script loads
 document.addEventListener('DOMContentLoaded', () => {
-    const savedEmail = localStorage.getItem('authorizedEmail');
-    if (savedEmail === AUTHORIZED_EMAIL) {
-        document.getElementById('auth').style.display = 'none';
-        document.getElementById('planner').style.display = 'block';
-        initializePlanner();
+    console.log("DOM fully loaded");
+    document.getElementById('auth').style.display = 'block';
+    document.getElementById('planner').style.display = 'none';
+    
+    const loginButton = document.querySelector('#auth button');
+    console.log("Login button:", loginButton);
+    
+    if (loginButton) {
+        loginButton.addEventListener('click', (e) => {
+            console.log("Login button clicked");
+            e.preventDefault();
+            authenticate();
+        });
+    } else {
+        console.error("Login button not found");
     }
+
+    // Add event listeners for add item buttons
+    ['christopher', 'maya'].forEach(child => {
+        const addButton = document.querySelector(`#${child} button`);
+        if (addButton) {
+            addButton.addEventListener('click', () => addItem(child));
+        }
+    });
 });
+
+// Expose functions to global scope for HTML onclick attributes
+window.addItem = addItem;
+window.toggleItem = toggleItem;
+window.removeItem = removeItem;
