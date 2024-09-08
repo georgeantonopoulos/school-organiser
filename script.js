@@ -1,5 +1,5 @@
 import { database } from './firebase-config.js';
-import { ref, set, get, child } from "firebase/database";
+import { ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-database.js";
 
 const AUTHORIZED_EMAIL = 'elpielpi@gmail.com';
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -142,19 +142,18 @@ function saveItems() {
 }
 
 function loadItems() {
-    get(child(ref(database), 'items'))
-        .then((snapshot) => {
-            if (snapshot.exists()) {
-                items = snapshot.val();
-                renderItems();
-                enableDragAndDrop();
-            } else {
-                console.log("No data available");
-            }
-        })
-        .catch((error) => {
-            console.error("Error loading data: ", error);
-        });
+    const itemsRef = ref(database, 'items');
+    onValue(itemsRef, (snapshot) => {
+        if (snapshot.exists()) {
+            items = snapshot.val();
+            renderItems();
+            enableDragAndDrop();
+        } else {
+            console.log("No data available");
+        }
+    }, (error) => {
+        console.error("Error loading data: ", error);
+    });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -174,6 +173,14 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
         console.error("Login button not found");
     }
+
+    // Add event listeners for add item buttons
+    ['christopher', 'maya'].forEach(child => {
+        const addButton = document.querySelector(`#${child} button`);
+        if (addButton) {
+            addButton.addEventListener('click', () => addItem(child));
+        }
+    });
 });
 
 // Expose functions to global scope for HTML onclick attributes
