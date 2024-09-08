@@ -132,7 +132,7 @@ function drop(e) {
 }
 
 function saveItems() {
-    set(ref(database, 'items'), items)
+    firebase.database().ref('items').set(items)
         .then(() => {
             console.log("Data saved successfully.");
         })
@@ -142,8 +142,7 @@ function saveItems() {
 }
 
 function loadItems() {
-    const itemsRef = ref(database, 'items');
-    onValue(itemsRef, (snapshot) => {
+    firebase.database().ref('items').on('value', (snapshot) => {
         if (snapshot.exists()) {
             items = snapshot.val();
             renderItems();
