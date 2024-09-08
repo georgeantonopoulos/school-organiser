@@ -12,12 +12,16 @@ let items = {
 };
 
 function authenticate() {
+    console.log("Authenticate function called");
     const email = document.getElementById('email').value;
+    console.log("Entered email:", email);
     if (email === AUTHORIZED_EMAIL) {
+        console.log("Email authorized");
         document.getElementById('auth').style.display = 'none';
         document.getElementById('planner').style.display = 'block';
         initializePlanner();
     } else {
+        console.log("Unauthorized email");
         alert('Unauthorized email. Please try again.');
     }
 }
@@ -154,12 +158,25 @@ function loadItems() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    console.log("DOM fully loaded");
     document.getElementById('auth').style.display = 'block';
     document.getElementById('planner').style.display = 'none';
+    
+    const loginButton = document.querySelector('#auth button');
+    console.log("Login button:", loginButton);
+    
+    if (loginButton) {
+        loginButton.addEventListener('click', (e) => {
+            console.log("Login button clicked");
+            e.preventDefault();
+            authenticate();
+        });
+    } else {
+        console.error("Login button not found");
+    }
 });
 
 // Expose functions to global scope for HTML onclick attributes
-window.authenticate = authenticate;
 window.addItem = addItem;
 window.toggleItem = toggleItem;
 window.removeItem = removeItem;
