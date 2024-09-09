@@ -39,22 +39,12 @@
       </header>
       <div id="planner" style="display: none;">
           <div id="days"></div>
-          <div id="lists">
-              <div id="christopher">
-                  <h2>Christopher</h2>
-                  <div class="items"></div>
-                  <div class="input-group">
-                    <input type="text" placeholder="Add new item">
-                    <button onclick="addItem('christopher')">Add</button>
-                  </div>
-              </div>
-              <div id="maya">
-                  <h2>Maya</h2>
-                  <div class="items"></div>
-                  <div class="input-group">
-                    <input type="text" placeholder="Add new item">
-                    <button onclick="addItem('maya')">Add</button>
-                  </div>
+          <div id="lists"></div>
+          <div id="addChildSection">
+              <h2>Add a New Child</h2>
+              <div id="addChildForm">
+                  <input type="text" id="newChildName" placeholder="Enter child's name">
+                  <button id="addChildButton" onclick="addChild()">Add Child</button>
               </div>
           </div>
       </div>

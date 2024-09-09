@@ -36,7 +36,57 @@ function initializePlanner() {
         dayElement.onclick = () => setActiveDay(index);
         daysContainer.appendChild(dayElement);
     });
-    loadItems();
+    loadChildren();
+    clearCheckedItemsFromOtherDays(); // Add this line
+}
+
+function clearCheckedItemsFromOtherDays() {
+    const today = DAYS[currentDay];
+    db.collection('items')
+        .where('userId', '==', currentUser.uid)
+        .where('selected', '==', true)
+        .get()
+        .then((snapshot) => {
+            const batch = db.batch();
+            snapshot.forEach((doc) => {
+                const item = doc.data();
+                if (item.day !== today) {
+                    batch.update(doc.ref, { selected: false });
+                }
+            });
+            return batch.commit();
+        })
+        .then(() => {
+            console.log('Cleared checked items from other days');
+            loadItems(); // Reload items to reflect the changes
+        })
+        .catch((error) => {
+            console.error('Error clearing checked items:', error);
+        });
+}
+
+function loadChildren() {
+    console.log('Loading children...');
+    db.collection('items')
+        .where('userId', '==', currentUser.uid)
+        .get()
+        .then((snapshot) => {
+            const listsContainer = document.getElementById('lists');
+            listsContainer.innerHTML = '';
+            const children = new Set();
+            snapshot.forEach((doc) => {
+                const item = doc.data();
+                children.add(item.child);
+            });
+            console.log('Found children:', Array.from(children));
+            children.forEach(childName => {
+                addChildToDOM(childName);
+            });
+            loadItems();
+        })
+        .catch((error) => {
+            console.error('Error loading children:', error);
+        });
 }
 
 function setActiveDay(index) {
@@ -59,6 +109,7 @@ function addItem(child) {
             userId: currentUser.uid
         }).then(() => {
             input.value = '';
+            loadItems(); // Reload items after adding a new one
         }).catch((error) => {
             console.error('Error adding item:', error);
         });
@@ -66,47 +117,154 @@ function addItem(child) {
 }
 
 function toggleItem(id, selected) {
-    db.collection('items').doc(id).update({
-        selected: selected
+    db.collection('items').doc(id).get().then((doc) => {
+        if (doc.exists) {
+            return db.collection('items').doc(id).update({
+                selected: selected
+            });
+        } else {
+            console.log('No such document!');
+            return Promise.reject('Document does not exist');
+        }
+    }).then(() => {
+        // Update the UI immediately
+        const itemElement = document.querySelector(`[data-id="${id}"]`);
+        if (itemElement) {
+            itemElement.classList.toggle('selected', selected);
+        }
     }).catch((error) => {
         console.error('Error updating item:', error);
     });
 }
 
 function removeItem(id) {
-    db.collection('items').doc(id).delete().catch((error) => {
+    db.collection('items').doc(id).get().then((doc) => {
+        if (doc.exists) {
+            return db.collection('items').doc(id).delete();
+        } else {
+            console.log('No such document!');
+            return Promise.reject('Document does not exist');
+        }
+    }).then(() => {
+        loadItems(); // Reload items after removing one
+    }).catch((error) => {
         console.error('Error removing item:', error);
     });
 }
 
 function loadItems() {
-    ['christopher', 'maya'].forEach(child => {
-        const container = document.querySelector(`#${child} .items`);
-        
-        db.collection('items')
-            .where('userId', '==', currentUser.uid)
-            .where('child', '==', child)
-            .where('day', '==', DAYS[currentDay])
-            .onSnapshot((snapshot) => {
-                container.innerHTML = '';
-                snapshot.forEach((doc) => {
-                    const item = doc.data();
-                    const itemElement = document.createElement('div');
-                    itemElement.className = `item ${item.selected ? 'selected' : ''}`;
-                    itemElement.draggable = true;
-                    itemElement.setAttribute('data-id', doc.id);
-                    itemElement.innerHTML = `
-                        <input type="checkbox" ${item.selected ? 'checked' : ''} onchange="toggleItem('${doc.id}', this.checked)">
-                        <span>${item.text}</span>
-                        <button onclick="removeItem('${doc.id}')">Remove</button>
-                    `;
-                    container.appendChild(itemElement);
-                });
-                enableDragAndDrop();
-            }, (error) => {
-                console.error('Error loading items:', error);
+    console.log('Loading items for day:', DAYS[currentDay]);
+    db.collection('items')
+        .where('userId', '==', currentUser.uid)
+        .where('day', '==', DAYS[currentDay])
+        .get()
+        .then((snapshot) => {
+            const itemsByChild = {};
+            snapshot.forEach((doc) => {
+                const item = doc.data();
+                if (!itemsByChild[item.child]) {
+                    itemsByChild[item.child] = [];
+                }
+                itemsByChild[item.child].push({ id: doc.id, ...item });
             });
-    });
+            
+            console.log('Items by child:', itemsByChild);
+            
+            // Update all children's items, even if empty
+            document.querySelectorAll('#lists > div').forEach(childElement => {
+                const childId = childElement.id;
+                const container = childElement.querySelector('.items');
+                container.innerHTML = '';
+                if (itemsByChild[childId]) {
+                    itemsByChild[childId].forEach(item => {
+                        const itemElement = createItemElement(item);
+                        container.appendChild(itemElement);
+                    });
+                }
+            });
+            
+            enableDragAndDrop();
+        })
+        .catch((error) => {
+            console.error('Error loading items:', error);
+        });
+}
+
+function createItemElement(item) {
+    const itemElement = document.createElement('div');
+    itemElement.className = `item ${item.selected ? 'selected' : ''}`;
+    itemElement.draggable = true;
+    itemElement.setAttribute('data-id', item.id);
+    itemElement.innerHTML = `
+        <input type="checkbox" ${item.selected ? 'checked' : ''} onchange="toggleItem('${item.id}', this.checked)">
+        <span>${item.text}</span>
+        <button onclick="removeItem('${item.id}')">Remove</button>
+    `;
+    return itemElement;
+}
+
+function addChild() {
+    const newChildName = document.getElementById('newChildName').value.trim();
+    if (newChildName) {
+        const childId = newChildName.toLowerCase().replace(/\s+/g, '-');
+        // We don't need to add anything to the database here
+        // Just add the child to the DOM
+        addChildToDOM(childId);
+        document.getElementById('newChildName').value = '';
+    }
+}
+
+function addChildToDOM(childId) {
+    console.log('Adding child to DOM:', childId);
+    const listsContainer = document.getElementById('lists');
+    if (!document.getElementById(childId)) {
+        const childElement = document.createElement('div');
+        childElement.id = childId;
+        childElement.innerHTML = `
+            <div class="child-header">
+                <h2>${childId.replace(/-/g, ' ')} <button class="delete-child" onclick="confirmDeleteChild('${childId}')">&times;</button></h2>
+            </div>
+            <div class="items"></div>
+            <div class="input-group">
+              <input type="text" placeholder="Add new item">
+              <button onclick="addItem('${childId}')">Add</button>
+            </div>
+        `;
+        listsContainer.appendChild(childElement);
+    }
+}
+
+function confirmDeleteChild(childId) {
+    if (confirm(`Are you sure you want to delete ${childId.replace(/-/g, ' ')} and all their items? This action cannot be undone.`)) {
+        deleteChild(childId);
+    }
+}
+
+function deleteChild(childId) {
+    // Remove child from DOM
+    const childElement = document.getElementById(childId);
+    if (childElement) {
+        childElement.remove();
+    }
+
+    // Delete all items for this child from the database
+    db.collection('items')
+        .where('userId', '==', currentUser.uid)
+        .where('child', '==', childId)
+        .get()
+        .then((snapshot) => {
+            const batch = db.batch();
+            snapshot.forEach((doc) => {
+                batch.delete(doc.ref);
+            });
+            return batch.commit();
+        })
+        .then(() => {
+            console.log(`Deleted all items for child: ${childId}`);
+        })
+        .catch((error) => {
+            console.error('Error deleting child items:', error);
+        });
 }
 
 function enableDragAndDrop() {
