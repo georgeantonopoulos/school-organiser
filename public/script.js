@@ -236,6 +236,7 @@ function addChildToDOM(childId) {
     if (!document.getElementById(childId)) {
         const childElement = document.createElement('div');
         childElement.id = childId;
+        childElement.className = 'child-list';
         childElement.innerHTML = `
             <div class="child-header">
                 <h2>${childId.replace(/-/g, ' ')} <button class="delete-child" onclick="confirmDeleteChild('${childId}')">&times;</button></h2>
@@ -247,7 +248,17 @@ function addChildToDOM(childId) {
             </div>
         `;
         listsContainer.appendChild(childElement);
+        
+        // Reorder children alphabetically
+        reorderChildren();
     }
+}
+
+function reorderChildren() {
+    const listsContainer = document.getElementById('lists');
+    const children = Array.from(listsContainer.getElementsByClassName('child-list'));
+    children.sort((a, b) => a.id.localeCompare(b.id));
+    children.forEach(child => listsContainer.appendChild(child));
 }
 
 function confirmDeleteChild(childId) {

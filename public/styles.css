@@ -57,8 +57,14 @@ h2 {
 
 #lists {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     padding: 20px;
+}
+
+#lists > div {
+    width: calc(50% - 10px);
+    margin-bottom: 20px;
 }
 
 #christopher, #maya {
@@ -73,7 +79,7 @@ h2 {
     display: flex;
     align-items: center;
     margin-bottom: 8px;
-    padding: 10px;
+    padding: 10px 30px 10px 10px;
     background-color: #f9f9f9;
     border-radius: 5px;
     transition: background-color 0.3s;
@@ -94,8 +100,9 @@ h2 {
 
 .remove-item {
     position: absolute;
-    right: -10px;
-    top: -10px;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
     width: 20px;
     height: 20px;
     background-color: #ff4d4d;
@@ -272,6 +279,18 @@ button:hover {
 
     #addChildButton {
         width: 100%;
+    }
+
+    #lists > div {
+        width: 100%;
+    }
+
+    .item {
+        padding-right: 40px;
+    }
+
+    .remove-item {
+        right: 10px;
     }
 }
 
