@@ -77,6 +77,7 @@ h2 {
     background-color: #f9f9f9;
     border-radius: 5px;
     transition: background-color 0.3s;
+    position: relative;
 }
 
 .item:hover {
@@ -89,6 +90,30 @@ h2 {
 
 .item input[type="checkbox"] {
     margin-right: 10px;
+}
+
+.remove-item {
+    position: absolute;
+    right: -10px;
+    top: -10px;
+    width: 20px;
+    height: 20px;
+    background-color: #ff4d4d;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background-color 0.3s;
+}
+
+.remove-item:hover {
+    background-color: #ff3333;
 }
 
 .item button {
@@ -304,4 +329,58 @@ button:hover {
 
 .delete-child:hover {
     color: #ff3333;
+}
+
+/* Google Sign-In Button and User Info */
+#authSection {
+    display: flex;
+    align-items: center;
+}
+
+.google-sign-in {
+    display: inline-flex;
+    align-items: center;
+    background-color: white;
+    border: 1px solid #dadce0;
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #3c4043;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.google-sign-in:hover {
+    background-color: #f7f8f8;
+}
+
+.google-sign-in img {
+    width: 18px;
+    height: 18px;
+    margin-right: 8px;
+}
+
+#userInfo {
+    display: flex;
+    align-items: center;
+    color: white;
+}
+
+#userName {
+    margin-right: 10px;
+}
+
+#signOutButton {
+    background-color: transparent;
+    border: 1px solid white;
+    color: white;
+    padding: 6px 12px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+#signOutButton:hover {
+    background-color: rgba(255, 255, 255, 0.1);
 }

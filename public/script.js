@@ -26,6 +26,17 @@ function googleLogin() {
     });
 }
 
+function googleLogout() {
+    firebase.auth().signOut().then(() => {
+        console.log('User signed out');
+        document.getElementById('userInfo').style.display = 'none';
+        document.getElementById('signInButton').style.display = 'block';
+        document.getElementById('planner').style.display = 'none';
+    }).catch((error) => {
+        console.error('Logout error:', error);
+    });
+}
+
 function initializePlanner() {
     const daysContainer = document.getElementById('days');
     daysContainer.innerHTML = '';
@@ -37,7 +48,12 @@ function initializePlanner() {
         daysContainer.appendChild(dayElement);
     });
     loadChildren();
-    clearCheckedItemsFromOtherDays(); // Add this line
+    clearCheckedItemsFromOtherDays();
+    
+    // Update user info display
+    document.getElementById('userName').textContent = currentUser.displayName;
+    document.getElementById('userInfo').style.display = 'block';
+    document.getElementById('signInButton').style.display = 'none';
 }
 
 function clearCheckedItemsFromOtherDays() {
@@ -198,7 +214,7 @@ function createItemElement(item) {
     itemElement.innerHTML = `
         <input type="checkbox" ${item.selected ? 'checked' : ''} onchange="toggleItem('${item.id}', this.checked)">
         <span>${item.text}</span>
-        <button onclick="removeItem('${item.id}')">Remove</button>
+        <button class="remove-item" onclick="removeItem('${item.id}')">&times;</button>
     `;
     return itemElement;
 }

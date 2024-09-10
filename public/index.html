@@ -32,10 +32,16 @@
     <div id="app">
       <header>
         <h1>School Organizer</h1>
-        <button id="signInButton" class="google-sign-in" onclick="googleLogin()">
-          <img src="google-logo.png" alt="Google logo">
-          Sign in
-        </button>
+        <div id="authSection">
+          <button id="signInButton" class="google-sign-in" onclick="googleLogin()">
+            <img src="google-logo.png" alt="Google logo">
+            Sign in with Google
+          </button>
+          <div id="userInfo" style="display: none;">
+            <span id="userName"></span>
+            <button id="signOutButton" onclick="googleLogout()">Sign out</button>
+          </div>
+        </div>
       </header>
       <div id="planner" style="display: none;">
           <div id="days"></div>
