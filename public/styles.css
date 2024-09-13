@@ -47,12 +47,17 @@ h2 {
     padding: 10px 15px;
     border-radius: 20px;
     cursor: pointer;
-    transition: background-color 0.3s, color 0.3s;
+    transition: background-color 0.3s, color 0.3s, transform 0.2s;
+}
+
+.day:hover {
+    transform: scale(1.05);
 }
 
 .day.active {
     background-color: #4CAF50;
     color: white;
+    animation: scaleIn 0.2s ease-out;
 }
 
 #lists {
@@ -79,15 +84,16 @@ h2 {
     display: flex;
     align-items: center;
     margin-bottom: 8px;
-    padding: 10px 30px 10px 10px;
+    padding: 10px;
     background-color: #f9f9f9;
     border-radius: 5px;
-    transition: background-color 0.3s;
+    transition: background-color 0.3s, transform 0.2s;
+    animation: fadeIn 0.3s ease-out;
     position: relative;
 }
 
 .item:hover {
-    background-color: #f0f0f0;
+    transform: translateX(5px);
 }
 
 .item.selected {
@@ -100,16 +106,16 @@ h2 {
 
 .remove-item {
     position: absolute;
-    right: 5px;
+    right: 10px;
     top: 50%;
     transform: translateY(-50%);
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
     background-color: #ff4d4d;
     color: white;
     border: none;
     border-radius: 50%;
-    font-size: 14px;
+    font-size: 16px;
     line-height: 1;
     padding: 0;
     cursor: pointer;
@@ -120,7 +126,7 @@ h2 {
 }
 
 .remove-item:hover {
-    background-color: #ff3333;
+    background-color: #ff3333; /* Slightly darker red on hover */
 }
 
 .item button {
@@ -147,6 +153,11 @@ input[type="text"] {
     padding: 8px;
     border: 1px solid #ddd;
     border-radius: 3px 0 0 3px;
+    transition: all 0.3s ease;
+}
+
+input[type="text"]:focus {
+    box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
 }
 
 button {
@@ -163,6 +174,10 @@ button:hover {
     background-color: #45a049;
 }
 
+button:active {
+    transform: scale(0.95);
+}
+
 /* Google Sign-In Button */
 .google-sign-in {
     display: inline-flex;
@@ -175,11 +190,13 @@ button:hover {
     font-weight: 500;
     color: #3c4043;
     cursor: pointer;
-    transition: background-color 0.3s;
+    transition: all 0.3s ease;
 }
 
 .google-sign-in:hover {
     background-color: #f7f8f8;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .google-sign-in img {
@@ -260,6 +277,8 @@ button:hover {
 
     .item {
         flex-wrap: wrap;
+        padding-right: 40px;  
+        position: relative;   
     }
 
     .item button {
@@ -290,11 +309,20 @@ button:hover {
     }
 
     .remove-item {
-        right: 10px;
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 28px;
+        height: 28px;
+        font-size: 18px;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
 }
 
-/* Adjustments for very small screens */
 @media (max-width: 480px) {
     body {
         font-size: 14px;
@@ -320,6 +348,17 @@ button:hover {
     input[type="text"], button {
         padding: 6px 10px;
     }
+
+    .item {
+        padding-right: 36px;  
+    }
+
+    .remove-item {
+        right: 6px;
+        width: 24px;
+        height: 24px;
+        font-size: 16px;
+    }
 }
 
 .child-header {
@@ -343,11 +382,12 @@ button:hover {
     cursor: pointer;
     padding: 0 0 0 10px;
     line-height: 1;
-    transition: color 0.3s;
+    transition: color 0.3s, transform 0.2s;
 }
 
 .delete-child:hover {
     color: #ff3333;
+    transform: scale(1.1);
 }
 
 /* Google Sign-In Button and User Info */
@@ -367,11 +407,13 @@ button:hover {
     font-weight: 500;
     color: #3c4043;
     cursor: pointer;
-    transition: background-color 0.3s;
+    transition: all 0.3s ease;
 }
 
 .google-sign-in:hover {
     background-color: #f7f8f8;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .google-sign-in img {
@@ -397,9 +439,46 @@ button:hover {
     padding: 6px 12px;
     font-size: 14px;
     cursor: pointer;
-    transition: background-color 0.3s;
+    transition: all 0.3s ease;
 }
 
 #signOutButton:hover {
     background-color: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+/* Add this section for animations */
+@keyframes fadeIn {
+    from { opacity: 0.8; }
+    to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+    from { transform: scale(0.95); }
+    to { transform: scale(1); }
+}
+
+@keyframes slideIn {
+    from { transform: translateY(-10px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* Add this to animate new items when they're added */
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.item-new {
+    animation: none;
+}
+
+/* Add this to animate items when they're removed */
+@keyframes fadeOut {
+    from { opacity: 1; transform: translateX(0); }
+    to { opacity: 0; transform: translateX(20px); }
+}
+
+.item-removing {
+    animation: fadeOut 0.3s ease-out;
 }

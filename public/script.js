@@ -110,7 +110,69 @@ function setActiveDay(index) {
         day.classList.toggle('active', i === index);
     });
     currentDay = index;
-    loadItems();
+    loadItems(false); // Pass false to indicate it's not the initial load
+}
+
+function loadItems(isInitialLoad = true) {
+    console.log('Loading items for day:', DAYS[currentDay]);
+    db.collection('items')
+        .where('userId', '==', currentUser.uid)
+        .where('day', '==', DAYS[currentDay])
+        .get()
+        .then((snapshot) => {
+            const itemsByChild = {};
+            snapshot.forEach((doc) => {
+                const item = doc.data();
+                if (!itemsByChild[item.child]) {
+                    itemsByChild[item.child] = [];
+                }
+                itemsByChild[item.child].push({ id: doc.id, ...item });
+            });
+            
+            console.log('Items by child:', itemsByChild);
+            
+            // Update all children's items, even if empty
+            document.querySelectorAll('#lists > div').forEach(childElement => {
+                const childId = childElement.id;
+                const container = childElement.querySelector('.items');
+                if (!isInitialLoad) {
+                    // If it's not the initial load, fade out the existing items
+                    container.style.opacity = '0';
+                    setTimeout(() => {
+                        updateChildItems(container, itemsByChild[childId] || []);
+                        container.style.opacity = '1';
+                    }, 150); // Short delay to allow fade out
+                } else {
+                    updateChildItems(container, itemsByChild[childId] || []);
+                }
+            });
+            
+            enableDragAndDrop();
+        })
+        .catch((error) => {
+            console.error('Error loading items:', error);
+        });
+}
+
+function updateChildItems(container, items) {
+    container.innerHTML = '';
+    items.forEach(item => {
+        const itemElement = createItemElement(item);
+        container.appendChild(itemElement);
+    });
+}
+
+function createItemElement(item) {
+    const itemElement = document.createElement('div');
+    itemElement.className = `item ${item.selected ? 'selected' : ''}`;
+    itemElement.draggable = true;
+    itemElement.setAttribute('data-id', item.id);
+    itemElement.innerHTML = `
+        <input type="checkbox" ${item.selected ? 'checked' : ''} onchange="toggleItem('${item.id}', this.checked)">
+        <span>${item.text}</span>
+        <button class="remove-item" onclick="removeItem('${item.id}')">&times;</button>
+    `;
+    return itemElement;
 }
 
 function addItem(child) {
@@ -154,69 +216,18 @@ function toggleItem(id, selected) {
 }
 
 function removeItem(id) {
-    db.collection('items').doc(id).get().then((doc) => {
-        if (doc.exists) {
-            return db.collection('items').doc(id).delete();
-        } else {
-            console.log('No such document!');
-            return Promise.reject('Document does not exist');
-        }
-    }).then(() => {
-        loadItems(); // Reload items after removing one
-    }).catch((error) => {
-        console.error('Error removing item:', error);
-    });
-}
-
-function loadItems() {
-    console.log('Loading items for day:', DAYS[currentDay]);
-    db.collection('items')
-        .where('userId', '==', currentUser.uid)
-        .where('day', '==', DAYS[currentDay])
-        .get()
-        .then((snapshot) => {
-            const itemsByChild = {};
-            snapshot.forEach((doc) => {
-                const item = doc.data();
-                if (!itemsByChild[item.child]) {
-                    itemsByChild[item.child] = [];
-                }
-                itemsByChild[item.child].push({ id: doc.id, ...item });
+    const itemElement = document.querySelector(`[data-id="${id}"]`);
+    if (itemElement) {
+        itemElement.classList.add('item-removing');
+        // Wait for the animation to complete before removing the item
+        setTimeout(() => {
+            db.collection('items').doc(id).delete().then(() => {
+                loadItems(); // Reload items after removing one
+            }).catch((error) => {
+                console.error('Error removing item:', error);
             });
-            
-            console.log('Items by child:', itemsByChild);
-            
-            // Update all children's items, even if empty
-            document.querySelectorAll('#lists > div').forEach(childElement => {
-                const childId = childElement.id;
-                const container = childElement.querySelector('.items');
-                container.innerHTML = '';
-                if (itemsByChild[childId]) {
-                    itemsByChild[childId].forEach(item => {
-                        const itemElement = createItemElement(item);
-                        container.appendChild(itemElement);
-                    });
-                }
-            });
-            
-            enableDragAndDrop();
-        })
-        .catch((error) => {
-            console.error('Error loading items:', error);
-        });
-}
-
-function createItemElement(item) {
-    const itemElement = document.createElement('div');
-    itemElement.className = `item ${item.selected ? 'selected' : ''}`;
-    itemElement.draggable = true;
-    itemElement.setAttribute('data-id', item.id);
-    itemElement.innerHTML = `
-        <input type="checkbox" ${item.selected ? 'checked' : ''} onchange="toggleItem('${item.id}', this.checked)">
-        <span>${item.text}</span>
-        <button class="remove-item" onclick="removeItem('${item.id}')">&times;</button>
-    `;
-    return itemElement;
+        }, 300);
+    }
 }
 
 function addChild() {
