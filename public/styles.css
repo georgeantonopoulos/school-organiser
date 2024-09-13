@@ -129,19 +129,19 @@ h2 {
     background-color: #ff3333; /* Slightly darker red on hover */
 }
 
-.item button {
+.item button:not(.remove-item) {
     margin-left: auto;
-    background-color: #ff4d4d;
+    background-color: #4CAF50;
     color: white;
     border: none;
-    padding: 5px 10px;
+    padding: 8px 15px; /* Adjust padding as needed */
     cursor: pointer;
     border-radius: 3px;
     transition: background-color 0.3s;
 }
 
-.item button:hover {
-    background-color: #ff3333;
+.item button:not(.remove-item):hover {
+    background-color: #45a049;
 }
 
 .input-group {
@@ -281,7 +281,7 @@ button:active {
         position: relative;   
     }
 
-    .item button {
+    .item button:not(.remove-item) {
         margin-top: 5px;
         width: 100%;
     }
@@ -345,7 +345,7 @@ button:active {
         padding: 8px;
     }
 
-    input[type="text"], button {
+    input[type="text"], button:not(.remove-item) {
         padding: 6px 10px;
     }
 
